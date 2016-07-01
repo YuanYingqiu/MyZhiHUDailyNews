@@ -90,6 +90,13 @@ public class DateUtil {
     }
 
 
+    /**
+     * 根据输入的日期 获得 相应模式的 日期 和 星期
+     * @param date
+     * @param inputMode
+     * @param outputMode
+     * @return
+     */
     public static String accordingDateGetDateAndWeek(String date,String inputMode,String outputMode){
         SimpleDateFormat inputFormat = new SimpleDateFormat(inputMode,Locale.CHINESE);
         SimpleDateFormat outputFormat = new SimpleDateFormat(outputMode,Locale.CHINESE);
