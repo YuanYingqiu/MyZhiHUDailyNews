@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+
+    <declare-styleable name="MyTintTextView">
+        <attr name="drawable_tint_color" format="color"/>
+        <attr name="drawable_left" format="reference"/>
+        <attr name="text" format="string"/>
+    </declare-styleable>
+
+    <declare-styleable name="MyTestView">
+        <attr name="drawable_test_tint_color" format="color"/>
+    </declare-styleable>
+
+    <declare-styleable name="MyTintTextView2">
+        <attr name="tint_color" format="color"/>
+    </declare-styleable>
+</resources>
