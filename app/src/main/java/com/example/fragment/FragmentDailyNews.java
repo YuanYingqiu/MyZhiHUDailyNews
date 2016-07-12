@@ -191,7 +191,7 @@ public class FragmentDailyNews extends BaseFragment implements SwipeRefreshLayou
 
 
     private void loadStories() {
-        setLateDate();
+        setLastDate();
         if (mStories != null && mStories.size() > 0) {
             //判断最开始的日期是否为今天
             //如果不是 判断隔了多少天，如果超过一天
@@ -217,7 +217,7 @@ public class FragmentDailyNews extends BaseFragment implements SwipeRefreshLayou
 
     }
 
-    private void setLateDate() {
+    private void setLastDate() {
         if (mStories != null && mStories.size() > 0)
             mLastDate = mStories.get(mStories.size() - 1).getDate();
     }
@@ -249,7 +249,7 @@ public class FragmentDailyNews extends BaseFragment implements SwipeRefreshLayou
         manager.getAsync(url, new OkHttpManager.ResultCallback<String>() {
             @Override
             public void onError(Call call, IOException e) {
-                EventBus.getDefault().post(new EventLoadDailyNews(Const.CODE_ERROR, "网络异常"));
+                EventBus.getDefault().post(new EventLoadDailyNews(Const.CODE_ERROR, "网络异常", false));
             }
 
             @Override
@@ -261,20 +261,21 @@ public class FragmentDailyNews extends BaseFragment implements SwipeRefreshLayou
                         if (needRemoveAllData) {
 
                             handlerNeedRemoveAllData(result);
+                            EventBus.getDefault().post(new EventLoadDailyNews(Const.CODE_SUCCESS_TODAY, null, true));
                         } else {
 
                             handlerDailyBeansData(result, true);
+                            EventBus.getDefault().post(new EventLoadDailyNews(Const.CODE_SUCCESS_TODAY, null, false));
                         }
 
-                        EventBus.getDefault().post(new EventLoadDailyNews(Const.CODE_SUCCESS_TODAY, null));
 
                     } else {
                         handlerDailyBeansData(result, false);
-                        EventBus.getDefault().post(new EventLoadDailyNews(Const.CODE_SUCCESS_OTHER_DAY, null));
+                        EventBus.getDefault().post(new EventLoadDailyNews(Const.CODE_SUCCESS_OTHER_DAY, null, false));
                     }
 
                 } catch (Exception e) {
-                    EventBus.getDefault().post(new EventLoadDailyNews(Const.CODE_ERROR, "数据解析异常"));
+                    EventBus.getDefault().post(new EventLoadDailyNews(Const.CODE_ERROR, "数据解析异常", false));
                 }
             }
         });
@@ -310,7 +311,7 @@ public class FragmentDailyNews extends BaseFragment implements SwipeRefreshLayou
         dao.removeStoriesAddStories(data);
     }
 
-    private void notifyAddTodayNews() {
+    private void notifyAddTodayNews(boolean needRemoveAll) {
 
         List<OutputStoriesBean> outputStoriesBeen = dao.loadStoriesAccordingDate(getTodayDate());
 
@@ -318,18 +319,25 @@ public class FragmentDailyNews extends BaseFragment implements SwipeRefreshLayou
             return;
         }
 
-        //去除重复项
-        if (mStories != null && mStories.size() > 0) {
-            List<OutputStoriesBean> out = copyStories();
-            out.retainAll(outputStoriesBeen);
-            mStories.removeAll(out);
+        if (needRemoveAll) {
+
+            mStories.clear();
+            mStories.addAll(outputStoriesBeen);
+
+        } else {
+            //去除重复项
+            if (mStories != null && mStories.size() > 0) {
+                List<OutputStoriesBean> out = copyStories();
+                out.retainAll(outputStoriesBeen);
+                mStories.removeAll(out);
+            }
+
+            mStories.addAll(0, outputStoriesBeen);
+
         }
 
-
-        mStories.addAll(0, outputStoriesBeen);
-        adapter.notifyItemChanged(0);
-
-        setLateDate();
+        adapter.notifyItemInserted(0);
+        setLastDate();
 
     }
 
@@ -344,9 +352,14 @@ public class FragmentDailyNews extends BaseFragment implements SwipeRefreshLayou
 
     private void notifyAddOtherDayNews() {
         int pos = mStories.size();
-        mStories.addAll(dao.loadStoriesAccordingDate(beforeLastDate()));
-        adapter.notifyItemChanged(pos);
-        setLateDate();
+        String beforeLastDay = beforeLastDate();
+        if(beforeLastDay == null || beforeLastDay.equals("")){
+            CommonUtil.showToast("得到了错误的时间");
+            return;
+        }
+        mStories.addAll(dao.loadStoriesAccordingDate(beforeLastDay));
+        adapter.notifyItemInserted(pos);
+        setLastDate();
     }
 
     private void notifyAddTopStories() {
@@ -377,12 +390,7 @@ public class FragmentDailyNews extends BaseFragment implements SwipeRefreshLayou
             calendar.setTime(parse);
 
             calendar.add(Calendar.DAY_OF_MONTH, -1);
-            String year = String.valueOf(calendar.get(Calendar.YEAR));
-            String month = CommonUtil.parseDay(calendar.get(Calendar.MONTH));
-            String day = String.valueOf(calendar.get(Calendar.DAY_OF_MONTH));
-
-
-            return year + month + day;
+            return df.format(calendar.getTime());
         } catch (ParseException e) {
             e.printStackTrace();
         }
@@ -436,12 +444,11 @@ public class FragmentDailyNews extends BaseFragment implements SwipeRefreshLayou
 
         if (news.getEventCode() == Const.CODE_SUCCESS_TODAY) {
             //今天
-            notifyAddTodayNews();
+            notifyAddTodayNews(news.isNeedRemoveAll());
             notifyAddTopStories();
 
         } else if (news.getEventCode() == Const.CODE_SUCCESS_OTHER_DAY) {
             isLoadingOtherDayDate = false;
-
             notifyAddOtherDayNews();
         } else if (news.getEventCode() == Const.CODE_ERROR) {
             CommonUtil.showToast(news.getEventMsg());
@@ -531,7 +538,7 @@ public class FragmentDailyNews extends BaseFragment implements SwipeRefreshLayou
                     TypedValue.COMPLEX_UNIT_DIP, 3, getActivity().getResources().getDisplayMetrics());
 
 
-            if(llGrayDotContainer.getChildCount() > 0){
+            if (llGrayDotContainer.getChildCount() > 0) {
                 llGrayDotContainer.removeAllViews();
             }
 
@@ -568,8 +575,8 @@ public class FragmentDailyNews extends BaseFragment implements SwipeRefreshLayou
                 });
     }
 
-    private void initTopStoriesTitle(){
-        if(mTopStories.size() > 0){
+    private void initTopStoriesTitle() {
+        if (mTopStories.size() > 0) {
             tvTopStoriesTitle.setText(mTopStories.get(vpTopImgsContainer.getCurrentItem()).getTitle());
         }
     }
