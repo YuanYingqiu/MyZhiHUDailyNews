@@ -98,4 +98,32 @@ public class OutputStoriesBean implements Parcelable{
         parcel.writeString(date);
         parcel.writeInt(type);
     }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        OutputStoriesBean bean = (OutputStoriesBean) o;
+
+        if (multipic != bean.multipic) return false;
+        if (type != bean.type) return false;
+        if (title != null ? !title.equals(bean.title) : bean.title != null) return false;
+        if (id != null ? !id.equals(bean.id) : bean.id != null) return false;
+        if (image != null ? !image.equals(bean.image) : bean.image != null) return false;
+        return date != null ? date.equals(bean.date) : bean.date == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = title != null ? title.hashCode() : 0;
+        result = 31 * result + (id != null ? id.hashCode() : 0);
+        result = 31 * result + (multipic ? 1 : 0);
+        result = 31 * result + (image != null ? image.hashCode() : 0);
+        result = 31 * result + (date != null ? date.hashCode() : 0);
+        result = 31 * result + type;
+        return result;
+    }
 }
