@@ -144,6 +144,15 @@ public class FragmentDailyNews extends BaseFragment implements SwipeRefreshLayou
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_daily_news, container, false);
         ButterKnife.bind(this, view);
+
+
+        return view;
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
         initToolBar();
         initRecyclerView();
 
@@ -151,8 +160,6 @@ public class FragmentDailyNews extends BaseFragment implements SwipeRefreshLayou
         initDotSpan();
         initTopStoriesTitle();
         initViewPagerEvent();
-
-        return view;
     }
 
     private void initViewPagerEvent() {
@@ -336,7 +343,7 @@ public class FragmentDailyNews extends BaseFragment implements SwipeRefreshLayou
 
         }
 
-        adapter.notifyItemInserted(0);
+        adapter.notifyDataSetChanged();
         setLastDate();
 
     }
